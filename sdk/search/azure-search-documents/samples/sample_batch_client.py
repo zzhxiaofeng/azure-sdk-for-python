@@ -41,15 +41,36 @@ def sample_batching_client():
     with SearchIndexDocumentBatchingClient(
             service_endpoint,
             index_name,
-            AzureKeyCredential(key),
-            window=100,
-            batch_size=100) as batch_client:
+            AzureKeyCredential(key)) as batch_client:
         # add upload actions
         batch_client.add_upload_actions(documents=[DOCUMENT])
         # add merge actions
         batch_client.add_merge_actions(documents=[{"HotelId": "1000", "Rating": 4.5}])
         # add delete actions
         batch_client.add_delete_actions(documents=[{"HotelId": "1000"}])
+
+def sample_batching_client_without_auto_flush():
+    DOCUMENT = {
+        'Category': 'Hotel',
+        'HotelId': '1000',
+        'Rating': 4.0,
+        'Rooms': [],
+        'HotelName': 'Azure Inn',
+    }
+
+    with SearchIndexDocumentBatchingClient(
+            service_endpoint,
+            index_name,
+            AzureKeyCredential(key),
+            auto_flush=False,
+    ) as batch_client:
+        # add upload actions
+        batch_client.add_upload_actions(documents=[DOCUMENT])
+        # add merge actions
+        batch_client.add_merge_actions(documents=[{"HotelId": "1000", "Rating": 4.5}])
+        # add delete actions
+        batch_client.add_delete_actions(documents=[{"HotelId": "1000"}])
+        batch_client.flush()
 
 if __name__ == '__main__':
     sample_batching_client()
