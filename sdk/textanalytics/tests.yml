@@ -5,6 +5,7 @@ jobs:
     parameters:
       BuildTargetingString: $(BuildTargetingString)
       ServiceDirectory: textanalytics
+      TestSamples: true
       EnvVars:
         AZURE_SUBSCRIPTION_ID: $(azure-subscription-id)
         AZURE_WHITELISTED_SUBSCRIPTION_ID: $(azure-whitelisted-subscription-id)
