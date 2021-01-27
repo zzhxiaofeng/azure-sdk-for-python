@@ -24,23 +24,55 @@ def get_token(credential):
     assert token.expires_on
 
 
-def test_certificate_credential(live_certificate):
+def test_certificate_credential_pem(live_pem_certificate):
+    tenant_id = live_pem_certificate["tenant_id"]
+    client_id = live_pem_certificate["client_id"]
+
+    credential = CertificateCredential(tenant_id, client_id, live_pem_certificate["cert_path"])
+    get_token(credential)
+
     credential = CertificateCredential(
-        live_certificate["tenant_id"], live_certificate["client_id"], live_certificate["cert_path"]
+        tenant_id, client_id, live_pem_certificate["cert_with_password_path"], password=live_pem_certificate["password"]
+    )
+    get_token(credential)
+
+    credential = CertificateCredential(tenant_id, client_id, certificate_bytes=live_pem_certificate["cert_bytes"])
+    get_token(credential)
+
+    credential = CertificateCredential(
+        tenant_id,
+        client_id,
+        certificate_bytes=live_pem_certificate["cert_with_password_bytes"],
+        password=live_pem_certificate["password"],
     )
     get_token(credential)
 
 
-def test_certificate_credential_with_password(live_certificate_with_password):
+def test_certificate_credential_pfx(live_pfx_certificate):
+    tenant_id = live_pfx_certificate["tenant_id"]
+    client_id = live_pfx_certificate["client_id"]
+
+    credential = CertificateCredential(tenant_id, client_id, live_pfx_certificate["cert_path"])
+    get_token(credential)
+
     credential = CertificateCredential(
-        live_certificate_with_password["tenant_id"],
-        live_certificate_with_password["client_id"],
-        live_certificate_with_password["cert_path"],
-        password=live_certificate_with_password["password"],
+        tenant_id, client_id, live_pfx_certificate["cert_with_password_path"], password=live_pfx_certificate["password"]
+    )
+    get_token(credential)
+
+    credential = CertificateCredential(tenant_id, client_id, certificate_bytes=live_pfx_certificate["cert_bytes"])
+    get_token(credential)
+
+    credential = CertificateCredential(
+        tenant_id,
+        client_id,
+        certificate_bytes=live_pfx_certificate["cert_with_password_bytes"],
+        password=live_pfx_certificate["password"],
     )
     get_token(credential)
 
 
+@pytest.mark.skip("...")
 def test_client_secret_credential(live_service_principal):
     credential = ClientSecretCredential(
         live_service_principal["tenant_id"],
@@ -50,6 +82,7 @@ def test_client_secret_credential(live_service_principal):
     get_token(credential)
 
 
+@pytest.mark.skip("...")
 def test_default_credential(live_service_principal):
     credential = DefaultAzureCredential()
     get_token(credential)

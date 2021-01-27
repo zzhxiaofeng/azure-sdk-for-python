@@ -8,6 +8,8 @@ import sys
 import pytest
 from azure.identity._constants import DEVELOPER_SIGN_ON_CLIENT_ID, EnvironmentVariables
 
+from dotenv import load_dotenv
+load_dotenv()
 
 if sys.version_info < (3, 5, 3):
     collect_ignore_glob = ["*_async.py"]
@@ -62,43 +64,78 @@ def live_service_principal():  # pylint:disable=inconsistent-return-statements
 
 
 @pytest.fixture()
-def live_certificate(live_service_principal):  # pylint:disable=inconsistent-return-statements,redefined-outer-name
-    """Provides a path to a PEM-encoded certificate with no password"""
-
-    pem_content = os.environ.get("PEM_CONTENT")
-    if not pem_content:
+def live_pem_certificate(live_service_principal):  # pylint:disable=inconsistent-return-statements,redefined-outer-name
+    content = os.environ.get("PEM_CONTENT")
+    if not content:
         pytest.skip("Expected PEM content in environment variable 'PEM_CONTENT'")
         return
 
-    pem_path = os.path.join(os.path.dirname(__file__), "certificate.pem")
-    try:
-        with open(pem_path, "w") as pem_file:
-            pem_file.write(pem_content)
-        return dict(live_service_principal, cert_path=pem_path)
-    except IOError as ex:
-        pytest.skip("Failed to write file '{}': {}".format(pem_path, ex))
-
-
-@pytest.fixture()
-def live_certificate_with_password(live_service_principal):
-    """Provides a path to a PEM-encoded, password-protected certificate, and its password"""
-
-    pem_content = os.environ.get("PEM_CONTENT_PASSWORD_PROTECTED")
+    password_protected_content = os.environ.get("PEM_CONTENT_PASSWORD_PROTECTED")
     password = os.environ.get("CERTIFICATE_PASSWORD")
-    if not (pem_content and password):
+    if not (password_protected_content and password):
         pytest.skip(
             "Expected password-protected PEM content in environment variable 'PEM_CONTENT_PASSWORD_PROTECTED'"
             + " and the password in 'CERTIFICATE_PASSWORD'"
         )
         return
 
-    pem_path = os.path.join(os.path.dirname(__file__), "certificate-with-password.pem")
+    current_directory = os.path.dirname(__file__)
+    parameters = {
+        "cert_bytes": content,
+        "cert_path": os.path.join(current_directory, "certificate.pem"),
+        "cert_with_password_bytes": password_protected_content,
+        "cert_with_password_path": os.path.join(current_directory, "certificate-with-password.pem"),
+        "password": password
+    }
+
     try:
-        with open(pem_path, "w") as pem_file:
-            pem_file.write(pem_content)
-        return dict(live_service_principal, cert_path=pem_path, password=password)
+        with open(parameters["cert_path"], "w") as f:
+            f.write(parameters["cert_bytes"])
+        with open(parameters["cert_with_password_path"], "w") as f:
+            f.write(parameters["cert_with_password_bytes"])
     except IOError as ex:
-        pytest.skip("Failed to write file '{}': {}".format(pem_path, ex))
+        pytest.skip('Failed to write a file: {}'.format(ex))
+
+    return dict(live_service_principal, **parameters)
+
+
+@pytest.fixture()
+def live_pfx_certificate(live_service_principal):  # pylint:disable=inconsistent-return-statements,redefined-outer-name
+    import base64
+    import six
+
+    encoded_content = os.environ.get("PFX_CONTENT")
+    if not encoded_content:
+        pytest.skip('Expected PFX content in environment variable "PFX_CONTENT"')
+        return
+
+    encoded_password_protected_content = os.environ.get("PFX_CONTENT_PASSWORD_PROTECTED")
+    password = os.environ.get("CERTIFICATE_PASSWORD")
+    if not (encoded_password_protected_content and password):
+        pytest.skip(
+            'Expected password-protected PFX content in environment variable "PFX_CONTENT_PASSWORD_PROTECTED"'
+            + ' and the password in "CERTIFICATE_PASSWORD"'
+        )
+        return
+
+    current_directory = os.path.dirname(__file__)
+    parameters = {
+        "cert_bytes": base64.b64decode(six.ensure_binary(encoded_content)),
+        "cert_path": os.path.join(current_directory, "certificate.pfx"),
+        "cert_with_password_bytes": base64.b64decode(six.ensure_binary(encoded_password_protected_content)),
+        "cert_with_password_path": os.path.join(current_directory, "certificate-with-password.pfx"),
+        "password": password
+    }
+
+    try:
+        with open(parameters["cert_path"], "wb") as f:
+            f.write(parameters["cert_bytes"])
+        with open(parameters["cert_with_password_path"], "wb") as f:
+            f.write(parameters["cert_with_password_bytes"])
+    except IOError as ex:
+        pytest.skip('Failed to write a file: {}'.format(ex))
+
+    return dict(live_service_principal, **parameters)
 
 
 @pytest.fixture()
