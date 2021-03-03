@@ -102,6 +102,21 @@ class FileTest(StorageTestCase):
         self.assertIsNotNone(response)
 
     @record
+    def test_file_exists(self):
+        # Arrange
+        directory_name = self._get_directory_reference()
+
+        directory_client = self.dsc.get_directory_client(self.file_system_name, directory_name)
+        directory_client.create_directory()
+
+        file_client1 = directory_client.get_file_client('filename')
+        file_client2 = directory_client.get_file_client('nonexistentfile')
+        file_client1.create_file()
+
+        self.assertTrue(file_client1.exists())
+        self.assertFalse(file_client2.exists())
+
+    @record
     def test_create_file_using_oauth_token_credential(self):
         # Arrange
         file_name = self._get_file_reference()
@@ -485,7 +500,6 @@ class FileTest(StorageTestCase):
 
     @record
     def test_account_sas(self):
-        pytest.skip("Re-enable this test after min dependency on blobs is updated.")
         # SAS URL is calculated from storage key, so this test runs live only
         if TestMode.need_recording_file(self.test_mode):
             return
@@ -516,7 +530,6 @@ class FileTest(StorageTestCase):
                 file_client.append_data(b"abcd", 0, 4)
 
     def test_account_sas_raises_if_sas_already_in_uri(self):
-        pytest.skip("Re-enable this test after min dependency on blobs is updated.")
         with self.assertRaises(ValueError):
             DataLakeFileClient(self.dsc.url + "?sig=foo", self.file_system_name, "foo", credential=AzureSasCredential("?foo=bar"))
 

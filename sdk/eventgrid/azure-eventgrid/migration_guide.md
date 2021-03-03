@@ -36,7 +36,7 @@ The modern Event Grid client library also provides the ability to share in some 
 The v2.x major version comes with support for [CloudEvents](https://github.com/cloudevents/spec). Now the cloud native Cloud Events can be directly published using the `CloudEvent` constructor or as a dictionary as follows:
 
 ```Python
-from azure.eventgrid import CloudEvent
+from azure.core.messaging import CloudEvent
 
 cloud_event = CloudEvent(
     type="Contoso.Items.ItemReceived",
@@ -63,32 +63,37 @@ cloud_event = {
 
 | In v1.3 | Equivalent in v2.0 | Sample |
 |---|---|---|
-|`EventGridClient(credentials)`|`EventGridPublisherClient(topic_hostname, credential)`|[Sample for client construction](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/eventgrid/azure-eventgrid/samples/champion_scenarios/cs5_publish_events_using_cloud_events_1.0_schema.py)|
-
-* Additionally, we now have an `EventGridConsumer` that should be used to deserialize the events. This class is used only to decode data into a `CloudEvent` or an `EventGridEvent`. Hence, there are no credentials required to construct this as shown below.
-
-```Python
-from azure.eventgrid import EventGridConsumer
-
-eg_consumer = EventGridConsumer()
-```
+|`EventGridClient(credentials)`|`EventGridPublisherClient(endpoint, credential)`|[Sample for client construction](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/eventgrid/azure-eventgrid/samples/sync_samples/sample_publish_events_using_cloud_events_1.0_schema.py)|
 
 ### Publishing Events
 
-The `publish_events` API is replaced with `send` in v2.0. Additionally, `send` API accepts `CloudEvent`, `CustomEvent` along with `EventGridEvent`
+The `publish_events` API is replaced with `send` in v2.0. Additionally, `send` API accepts `CloudEvent`, `EventGridEvent` along with their dict representations.
 
 | In v1.3 | Equivalent in v2.0 | Sample |
 |---|---|---|
-|`EventGridClient(credentials).publish_events(topic_hostname, events)`|`EventGridPublisherClient(topic_hostname, credential).send(events)`|[Sample for client construction](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/eventgrid/azure-eventgrid/samples/champion_scenarios/cs5_publish_events_using_cloud_events_1.0_schema.py)|
+|`EventGridClient(credentials).publish_events(topic_hostname, events)`|`EventGridPublisherClient(endpoint, credential).send(events)`|[Sample for client construction](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/eventgrid/azure-eventgrid/samples/sync_samples/sample_publish_events_using_cloud_events_1.0_schema.py)|
 
 ### Consuming Events
 
-In v2.0, `EventGridConsumer` can be used to decode both Cloud Events and EventGrid Events. Please find the samples [here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/eventgrid/azure-eventgrid/samples/consume_samples) to see detailed examples of the consumer.
+The v2.x major version supports deserializing dictionaries into strongly typed objects. The `from_dict` methods in the `CloudEvent` and `EventGridEvent` models can be used for the same.
+
+This example consumes a payload message received from ServiceBus and deserializes it to an EventGridEvent object.
 
 ```Python
-EventGridConsumer().decode_cloud_event(cloud_event_dict)
+from azure.eventgrid import EventGridEvent
+from azure.servicebus import ServiceBusClient
+import os
+import json
 
-EventGridConsumer().decode_eventgrid_event(eventgrid_event_dict)
+# all types of EventGridEvents below produce same DeserializedEvent
+connection_str = os.environ['SERVICE_BUS_CONN_STR']
+queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+
+with ServiceBusClient.from_connection_string(connection_str) as sb_client:
+    payload =  sb_client.get_queue_receiver(queue_name).receive_messages()
+
+    ## deserialize payload into a list of typed Events
+    events = [EventGridEvent.from_dict(json.loads(next(msg.body).decode('utf-8'))) for msg in payload]
 ```
 
 ## Additional samples

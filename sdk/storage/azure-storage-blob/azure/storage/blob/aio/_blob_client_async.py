@@ -463,7 +463,7 @@ class BlobClient(AsyncStorageAccountHostsMixin, BlobClientBase):  # pylint: disa
         return downloader
 
     @distributed_trace_async
-    async def delete_blob(self, delete_snapshots=False, **kwargs):
+    async def delete_blob(self, delete_snapshots=None, **kwargs):
         # type: (str, Any) -> None
         """Marks the specified blob for deletion.
 
@@ -569,10 +569,10 @@ class BlobClient(AsyncStorageAccountHostsMixin, BlobClientBase):  # pylint: disa
         Returns True if a blob exists with the defined parameters, and returns
         False otherwise.
 
-        :param str version_id:
+        :kwarg str version_id:
             The version id parameter is an opaque DateTime
             value that, when present, specifies the version of the blob to check if it exists.
-        :param int timeout:
+        :kwarg int timeout:
             The timeout parameter is expressed in seconds.
         :returns: boolean
         """
