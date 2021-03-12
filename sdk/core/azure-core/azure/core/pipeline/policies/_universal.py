@@ -282,6 +282,8 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
                 for header, value in http_request.headers.items():
                     if header.lower() == 'authorization':
                         value = '*****'
+                    if header.lower() == 'x-ms-authorization-auxiliary':
+                        value = '*****'
                     _LOGGER.debug("    %r: %r", header, value)
                 _LOGGER.debug("Request body:")
 
