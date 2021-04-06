@@ -100,6 +100,9 @@ jobs:
         ToxTestEnv: $(toxenv)
         ToxEnvParallel: ${{ parameters.ToxEnvParallel }}
         InjectedPackages: $(InjectedPackages)
+        EnvVars:
+          LIB: C:\OpenSSL-win64\lib;%LIB%
+          INCLUDE: C:\OpenSSL-win64\include;%INCLUDE%
         BeforeTestSteps:
           - task: DownloadPipelineArtifact@2
             inputs:
